@@ -1,0 +1,32 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux
+            ext: ''
+          - os: macos-latest
+            target: macos
+            ext: ''
+          - os: windows-latest
+            target: win
+            ext: '.exe'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run build
+      - run: npx pkg dist/index.js --target node20-${{ matrix.target }}-x64 --output ${{ github.event.repository.name }}-${{ matrix.target }}${{ matrix.ext }}
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ github.event.repository.name }}-${{ matrix.target }}${{ matrix.ext }}
