@@ -10,23 +10,31 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            target: linux
-            ext: ''
+            target: linux-x64
+            node_target: node20-linux-x64
           - os: macos-latest
-            target: macos
-            ext: ''
+            target: macos-x64
+            node_target: node20-macos-x64
           - os: windows-latest
-            target: win
-            ext: '.exe'
+            target: win-x64
+            node_target: node20-win-x64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci
+      - run: npm install
       - run: npm run build
-      - run: npx pkg dist/index.js --target node20-${{ matrix.target }}-x64 --output ${{ github.event.repository.name }}-${{ matrix.target }}${{ matrix.ext }}
-      - uses: softprops/action-gh-release@v1
+      - name: Package executable
+        run: npx -y @yao-pkg/pkg dist/index.js --target ${{ matrix.node_target }} --output ${{ github.event.repository.name }}-${{ matrix.target }}
+        shell: bash
+      - name: List output
+        run: ls -la ${{ github.event.repository.name }}-*
+        shell: bash
+      - uses: softprops/action-gh-release@v2
         with:
-          files: ${{ github.event.repository.name }}-${{ matrix.target }}${{ matrix.ext }}
+          files: |
+            ${{ github.event.repository.name }}-${{ matrix.target }}
+            ${{ github.event.repository.name }}-${{ matrix.target }}.exe
+          fail_on_unmatched_files: false
