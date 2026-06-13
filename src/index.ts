@@ -2,14 +2,14 @@
 import * as fs from "fs";
 import * as path from "path";
 
+/** Result of linting a single JSON string. */
 interface LintResult {
-  file: string;
   valid: boolean;
   error?: string;
   line?: number;
 }
 
-function lintJson(content: string): { valid: boolean; error?: string; line?: number } {
+function lintJson(content: string): LintResult {
   try {
     JSON.parse(content);
     return { valid: true };
@@ -41,7 +41,8 @@ function main() {
   const format = args.includes("--format");
   const quiet = args.includes("--quiet");
   const indentIdx = args.indexOf("--indent");
-  const indent = indentIdx >= 0 ? parseInt(args[indentIdx + 1]) : 2;
+  const indentRaw = indentIdx >= 0 ? parseInt(args[indentIdx + 1], 10) : 2;
+  const indent = Number.isNaN(indentRaw) ? 2 : indentRaw;
   const files = args.filter(a => !a.startsWith("--") && (indentIdx < 0 || args.indexOf(a) !== indentIdx + 1));
   
   let hasErrors = false;
